@@ -1,8 +1,8 @@
-COLABORADOR,ÃREA,FECHA,CONCEPTO,DESCRIPCIÃN,REGISTRO,ID,AREA
-Luis Coronel,AtenciÃ³n a clientes,05/12/2024,Visita a cliente,Entrega de dinero,,1,
-Luz Maria Rivas,AtenciÃ³n a clientes,10/12/2024,Visita a cliente,Entrega de dinero,,1,
-Arturo Moctezuma,AtenciÃ³n a clientes,16/01/2025,Incapacidad,Enfermedad del estomago,,1,
-Anibal Cortez,AtenciÃ³n a clientes,08/01/2025,Visita a cliente,Entrega de dinero,,1,
-Alberto Herrera,TesorerÃ­a,31/12/2024,Permiso,Enfermedad de hija,,1,
-Jose Eduardo,AdministraciÃ³n y servicios,31/12/2024,Permiso,Enfermedad de hija,,1,
-Ana Karen,,13/02/2025,Llegada tarde,,13/02/2025 13:20:20,1012,Fiscal
+COLABORADOR,AREA,FECHA,CONCEPTO,DETALLE,REGISTRO,ID
+Luis Coronel,Atencion a clientes,05/12/2024,Visita a cliente,Entrega de dinero,,1,
+Luz Maria Rivas,Atencion a clientes,10/12/2024,Visita a cliente,Entrega de dinero,,1,
+Arturo Moctezuma,Atencion a clientes,16/01/2025,Incapacidad,Enfermedad del estomago,,1,
+Anibal Cortez,Atencion a clientes,08/01/2025,Visita a cliente,Entrega de dinero,,1,
+Alberto Herrera,Tesoreria,31/12/2024,Permiso,Enfermedad de hija,,1,
+Jose Eduardo,Administracion y servicios,31/12/2024,Permiso,Enfermedad de hija,,1,
+Ana Karen,Fiscal,13/02/2025,Llegada tarde,,13/02/2025 13:20:20,1012,
