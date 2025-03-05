@@ -48,7 +48,23 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
         'Tuesday': 'MARTES',
         'Wednesday': 'MIÉRCOLES',
         'Thursday': 'JUEVES',
-        'Friday': 'VIERNES'
+        'Friday': 'VIERNES',
+        'Saturday': 'SABADO',
+        'Sunday': 'DOMINGO'
+    }
+
+    vcc = {
+        (1, 1.99): 12,
+        (2, 2.99): 14,
+        (3, 3.99): 16,
+        (4, 4.99): 18,
+        (5, 5.99): 20,
+        (6, 10.99): 22,
+        (11, 15.99): 24,
+        (16, 20.99): 26,
+        (21, 25.99): 28,
+        (26, 30.99): 30,
+        (31, 50): 32
     }
 
     df3['FECHA'] = pd.to_datetime(df3['FECHA'])
@@ -62,7 +78,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
     df['QUINCENAS'] = pd.to_numeric(df['QUINCENAS'], errors='coerce')
     df['R. EXCEDIDO'] = pd.to_numeric(df['R. EXCEDIDO'], errors='coerce')
 
-    hoy = datetime.datetime.now()
+    hoy = pd.to_datetime(datetime.datetime.now())
     dia_semana = days[hoy.strftime('%A')]
 
     # Filtro por área
@@ -83,7 +99,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
         dfvc = df3  # [(df3['EJECUTIVO'] == st.session_state['Nombre'])]
         dfvc = dfvc[dfvc['FECHA'] > (hoy - timedelta(days=1))]
     else:
-        dfvc = df3[(df3['ÁREA'] == st.session_state['area'])]
+        dfvc = df3[(df3['AREA'] == st.session_state['area'])]
 
     dfvc = dfvc[['EJECUTIVO', 'MES', 'FECHA']]
     dfvc['FECHA'] = dfvc['FECHA'].dt.date
@@ -97,9 +113,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
     else:
         dfhr = df4
 
-    dfhr = dfhr[['EJECUTIVO', 'ENTRADA', 'SALIDA']]
-
-    dfhr = dfhr.sort_values(by='EJECUTIVO', ascending=True)
+    # Suma de vacaciones tomadas
 
     with st.sidebar:
         if st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria', 'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
@@ -122,6 +136,16 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
             dfho = dfho[dfho['MES'] == mes]
             dfvc = dfvc[dfvc['MES'] == mes]
 
+    if st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria', 'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
+        if ejecutivo == 'Selecciona un colaborador':
+            ingreso = dfhr[(dfhr['ÁREA'] == st.session_state['area'])]
+        else:
+            ingreso = dfhr[(dfhr['EJECUTIVO'] == ejecutivo)]
+    else:
+        ingreso = dfhr[(dfhr['EJECUTIVO'] == st.session_state['Nombre'])]
+    # Asegúrate de que ingreso sea de tipo fecha
+    ingreso = pd.to_datetime(ingreso['INGRESO'], format='%d/%m/%Y')
+
     quincenas = df_filtered[df_filtered['QUINCENAS'] == 1]
     quincenas_agrupadas = quincenas.groupby(
         'NOMBRE', as_index=False)['FECHA'].agg(list)
@@ -130,19 +154,16 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
     quincenas = quincenas[['NOMBRE', 'FECHA', 'QUINCENAS']]
     # quincenas = quincenas.sort_values(by='FECHA', ascending=False)
 
-    # Suma de vacaciones tomadas
-    vt = round(pd.to_numeric(
-        df_filtered['VACACIONES TOMADAS'], errors='coerce').sum(), 2)
-
     detailAsis = df_filtered[['NOMBRE', 'FECHA', 'HORA REGISTRO EN…',
                               'R. EXCEDIDO', 'TOLERANCIA', 'RETARDOS', 'REGISTRO']]
-
-    print(f'1.2: {detailAsis}')
 
     # Base de datos // TAB 2
     dfnew = df_filtered[['NOMBRE', 'FECHA', 'MES', 'HO', 'TOLERANCIA',
                          'HORA REGISTRO EN…', 'HORA REGISTRO SAL…',  'RETARDOS']]
     dfnew['FECHA'] = dfnew['FECHA'].dt.date
+
+    vt = round(pd.to_numeric(
+        df_filtered['VACACIONES TOMADAS'], errors='coerce').sum(), 2)
 
     df_filtered = df_filtered.dropna(subset=['HORA REGISTRO EN…'])
     hightR = df_filtered[['FECHA',
@@ -157,11 +178,58 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
     excedente['R. EXCEDIDO'] = excedente['R. EXCEDIDO'].astype(str) + \
         ' Minutos excedidos promediados'
 
-    print(f'VACACIONES TOMADAS: {vt}')
+    if ingreso.dt.month.iloc[0] == hoy.month and ingreso.dt.day.iloc[0] == hoy.day:
+        vt = 0  # Establecer vt a 0 si es el aniversario
 
+    # Leer el archivo CSV PASS-ST
+    # Asegúrate de proporcionar la ruta correcta
+    df_pass_st = pd.read_csv('PASS-ST.csv')
+
+    # Filtrar por el área en st.session_state
+
+    if st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria', 'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
+
+        if ejecutivo == 'Selecciona un colaborador':
+            total_tomados = df_pass_st[df_pass_st['Area'] ==
+                                       st.session_state['area']]['Tomados'].sum()
+            vt = vt + total_tomados
+        else:
+            total_tomados = df_pass_st[df_pass_st['Ejecutivo'] ==
+                                       ejecutivo]['Tomados'].sum()
+            vt = vt + total_tomados
+
+    else:
+        vt = vt + st.session_state['Tomados']
+
+    dfhr = dfhr[['EJECUTIVO', 'ENTRADA', 'SALIDA']]
+
+    dfhr = dfhr.sort_values(by='EJECUTIVO', ascending=True)
     # Suma de vacaciones pendientes|
-    vp = round(pd.to_numeric(
-        df_filtered['VACACIONES PENDIENTES'], errors='coerce').mean(), 0)
+
+    if st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria', 'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
+        if ejecutivo == 'Selecciona un colaborador':
+            # for a in ingreso:
+            diferencia_dias = [round(((hoy - a).days) / 365) for a in ingreso]
+        else:
+            diferencia_dias = ((hoy - ingreso).dt.days) / 365
+    else:
+        diferencia_dias = ((hoy - ingreso).dt.days) / 365
+
+    vp = []  # Inicializa vp como una lista
+    for dia in diferencia_dias:
+        for a, b in vcc.items():
+            if a[0] <= dia <= a[1]:
+                vp.append(b)  # Agrega el valor b a la lista
+                break
+
+    if vp is None:  # Si no se encontró ningún valor, asigna 0
+        vp = 0
+
+    vp = sum(vp)  # Suma todos los valores en la lista
+    vp = vp - vt
+
+    if st.session_state['usuario'] not in ['lfortunato', 'clopez', 'bsanabria', 'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
+        st.session_state['vacaciones'] = vp
 
     # Total de asistencias
     atotal = df_filtered['NOMBRE'].count()
@@ -181,13 +249,10 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
     exc_fech = df_filtered.groupby('FECHA', as_index=False)[
         'R. EXCEDIDO'].max()
 
-    print(f'2.2: {detailAsis}')
-
     # detailAsis = pd.merge(
     #     detailAsis, exc_fech[['NOMBRE', 'FECHA']], on='R. EXCEDIDO', how='left')
     detailAsis = pd.merge(
         detailAsis, exc_fech[['R. EXCEDIDO', 'FECHA']], on='FECHA', how='left')
-    print(f'EXC_FECH ANTES DEL SEGUNDO MERGE: {detailAsis}')
 
     ndf_filtered = df_filtered.sort_values(
         by='RETARDOS', ascending=True)  # Ordenar de mayor a menor
@@ -241,7 +306,8 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
                       y='MINUTOS',
                       title='Reporte detallado de retardos',
                       width=800,
-                      height=450)
+                      height=450,
+                      hover_data={'MINUTOS': False})  # Desactivar la visualización de MINUTOS
 
     # Establecer el rango del eje Y (de 08:00:00 a 10:00:00 en segundos)
     fig3.update_yaxes(
