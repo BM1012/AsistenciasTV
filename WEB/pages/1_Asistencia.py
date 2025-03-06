@@ -37,6 +37,23 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
 
     mes_actual = datetime.datetime.now().month
 
+    ghdf = 'https://raw.githubusercontent.com/BM1012/AsistenciasTV/main/Vacaciones.csv'
+
+    def carga_datos(link):
+        return pd.read_csv(link, encoding='utf-8-sig')
+
+    GitVacs = carga_datos(ghdf)
+
+    if st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria', 'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
+        GitVacs = GitVacs[GitVacs['AREA'] == st.session_state['area']]
+    else:
+        GitVacs = GitVacs[GitVacs['COLABORADOR'] == st.session_state['Nombre']]
+
+    GitVacs = GitVacs[GitVacs['ID'] == 1]
+
+    GitVacs = GitVacs.groupby(by='COLABORADOR', as_index=False)[
+        'ID'].count()
+
     # DataFrame
     df = pd.read_csv(url)
     df2 = pd.read_csv(urlho)
@@ -190,13 +207,15 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
     if st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria', 'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
 
         if ejecutivo == 'Selecciona un colaborador':
+            vtgh = GitVacs['ID'].sum()
             total_tomados = df_pass_st[df_pass_st['Area'] ==
                                        st.session_state['area']]['Tomados'].sum()
-            vt = vt + total_tomados
+            vt = vt + total_tomados + vtgh
         else:
             total_tomados = df_pass_st[df_pass_st['Ejecutivo'] ==
                                        ejecutivo]['Tomados'].sum()
-            vt = vt + total_tomados
+            vtgh = GitVacs[GitVacs['COLABORADOR'] == ejecutivo]['ID'].sum()
+            vt = vt + total_tomados + vtgh
 
     else:
         vt = vt + st.session_state['Tomados']
