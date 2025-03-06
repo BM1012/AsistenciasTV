@@ -19,8 +19,6 @@ textColor = st.get_option('theme.textColor')
 # Aplicando colores CSS
 utils.local_css('estilos.css', backgroundColor)
 
-# Definir paletas
-
 
 login.generarLogin()  # Usar la función con el prefijo del módulo
 
@@ -89,7 +87,6 @@ if 'usuario' in st.session_state:
         if ingreso.dt.month.iloc[0] == hoy.month and ingreso.dt.day.iloc[0] == hoy.day:
             vt = 0  # Establecer vt a 0 si es el aniversario
 
-    # Leer el archivo CSV PASS-ST
     # Asegúrate de proporcionar la ruta correcta
     df_pass_st = pd.read_csv('PASS-ST.csv')
     vt = vt + st.session_state['Tomados']
@@ -188,7 +185,6 @@ if 'usuario' in st.session_state:
     df_delays = df_delays.groupby('ExcedenteRange')[
         'NOMBRE']  # .reset_index()
 
-    # DAY_MAX == PICOS RETARDOS
     day_max = df_actual[['FECHA',
                          'NOMBRE', 'HORA REGISTRO EN…', 'R. EXCEDIDO']]
     day_max['FECHA'] = day_max['FECHA'].dt.date
@@ -203,11 +199,6 @@ if 'usuario' in st.session_state:
     # Filtro de home office
     dfho = df2[(df2['MES FECHA'] == hoy.month)]
 
-    print(f'AQUI ESTA EL DF HOME DESPUES DE FILTRAR{dfho}')
-    # Filtro de vacaciones
-    # if st.session_state['usuario'] not in ['lfortunato', 'clopez']:
-    #    dfvc = df3[(df3['ÁREA'] == st.session_state['area'])]
-    # else:
     dfvc = df3
     dfvc = dfvc[dfvc['FECHA'] > (hoy - timedelta(days=1))]
     # Reinicio de formato para quitar la hora
@@ -420,8 +411,6 @@ if 'usuario' in st.session_state:
     with col5:
         st.plotly_chart(utils.aplicarformatoChart(fig4, backgroundColor=backgroundColor,
                                                   textcolor=textColor), use_container_width=True, key='chart-barnew')
-        # st.plotly_chart(utils.aplicarformatoChart(fig5, backgroundColor=backgroundColor,
-        #   textcolor=textColor), use_container_width=True, key='chart-barnew2')
     with col6:
         st.subheader('Detalle / Minutos Excedentes')
         st.dataframe(df_excedente, hide_index=True,
