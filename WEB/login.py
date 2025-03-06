@@ -1,9 +1,6 @@
-# import gdown
 import streamlit as st
 import pandas as pd
 import unicodedata
-# from PIL import Image
-# import io
 import datetime
 
 dfusuarios = pd.read_csv('PASS-ST.csv')
@@ -12,7 +9,6 @@ dfusuarios = pd.read_csv('PASS-ST.csv')
 usuarios_permitidos = ['lfortunato', 'clopez', 'bsanabria',
                        'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']
 
-# tv = "https://drive.google.com/uc?export=view&id=1OVkp45Xs0PDDI174eMz8ytfWhsWF5dHN"
 hoy = datetime.datetime.now()
 
 
