@@ -38,17 +38,76 @@ if 'usuario' in st.session_state:
     sheetid = '1662268283'
     urlvc = f'https://docs.google.com/spreadsheets/d/{gsheet}/export?format=csv&gid={sheetid}&format'
 
+    sheetid = '1613484335'
+    urlhr = f'https://docs.google.com/spreadsheets/d/{gsheet}/export?format=csv&gid={sheetid}&format'
+
     df = pd.read_csv(urlasis)
     df2 = pd.read_csv(urlho)
     df3 = pd.read_csv(urlvc)
+    df4 = pd.read_csv(urlhr)
 
     days = {
         'Monday': 'LUNES',
         'Tuesday': 'MARTES',
         'Wednesday': 'MIÉRCOLES',
         'Thursday': 'JUEVES',
-        'Friday': 'VIERNES'
+        'Friday': 'VIERNES',
+        'Saturday': 'SABADO',
+        'Sunday': 'DOMINGO'
     }
+
+    vcc = {
+        (1, 1.99): 12,
+        (2, 2.99): 14,
+        (3, 3.99): 16,
+        (4, 4.99): 18,
+        (5, 5.99): 20,
+        (6, 10.99): 22,
+        (11, 15.99): 24,
+        (16, 20.99): 26,
+        (21, 25.99): 28,
+        (26, 30.99): 30,
+        (31, 50): 32
+    }
+
+    # HORARIO -----------------------------------------------------
+    dfhr = df4[['EJECUTIVO', 'ENTRADA', 'SALIDA']]
+
+    dfhr = dfhr.sort_values(by='EJECUTIVO', ascending=True)
+
+    mes_actual = datetime.now().month
+    hoy = datetime.now()
+
+    ingreso = df4[(df4['EJECUTIVO'] == st.session_state['Nombre'])]
+    ingreso = pd.to_datetime(ingreso['INGRESO'], format='%d/%m/%Y')
+
+    vt = df[(df['NOMBRE'] == st.session_state['Nombre'])]
+    vt = round(pd.to_numeric(
+        vt['VACACIONES TOMADAS'], errors='coerce').sum(), 2)
+
+    if st.session_state['usuario'] not in ['lfortunato']:
+        if ingreso.dt.month.iloc[0] == hoy.month and ingreso.dt.day.iloc[0] == hoy.day:
+            vt = 0  # Establecer vt a 0 si es el aniversario
+
+    # Leer el archivo CSV PASS-ST
+    # Asegúrate de proporcionar la ruta correcta
+    df_pass_st = pd.read_csv('PASS-ST.csv')
+    vt = vt + st.session_state['Tomados']
+    diferencia_dias = ((hoy - ingreso).dt.days) / 365
+    vp = []  # Inicializa vp como una lista
+    for dia in diferencia_dias:
+        for a, b in vcc.items():
+            if a[0] <= dia <= a[1]:
+                vp.append(b)  # Agrega el valor b a la lista
+                break
+
+    if vp is None:  # Si no se encontró ningún valor, asigna 0
+        vp = 0
+
+    vp = sum(vp)  # Suma todos los valores en la lista
+    vp = vp - vt
+
+    st.session_state['vacaciones'] = vp
 
     # FECHA a datetime
     df['FECHA'] = pd.to_datetime(df['FECHA'])
@@ -61,15 +120,11 @@ if 'usuario' in st.session_state:
     df2['MES'] = pd.to_datetime(df2['MES FECHA'])
     df3['FECHA'] = pd.to_datetime(df3['FECHA'])
 
-    mes_actual = datetime.now().month
-    hoy = datetime.now()
-    if mes_actual == 1:
-        mes_anterior = 12
+    if hoy.day > 17:
+        mes_anterior = mes_actual - 1
     else:
-        if hoy.day > 17:
-            mes_anterior = mes_actual - 1
-        else:
-            mes_anterior = mes_actual - 2 if mes_actual > 2 else 12
+        mes_actual = mes_actual - 1
+        mes_anterior = mes_actual - 1 if mes_actual >= 2 else 12
     dia_semana = days[hoy.strftime('%A')]
 
     # Filtro de asistencia
@@ -83,12 +138,11 @@ if 'usuario' in st.session_state:
                        & (df['FECHA'].dt.month == mes_actual)]
         if len(df_actual) == 0:
             df_actual = df[(df['ÁREA'] == st.session_state['area']) & (
-                df['FECHA'].dt.month == (12 if mes_actual > 2 else (mes_actual - 1)))]
+                df['FECHA'].dt.month == mes_actual)]
     else:
         df_actual = df_adminACT
         if len(df_actual) == 0:
-            df_actual = df[df['FECHA'].dt.month ==
-                           (12 if mes_actual > 2 else (mes_actual - 1))]
+            df_actual = df[df['FECHA'].dt.month == mes_actual]
 
     excedente = df_actual[['NOMBRE', 'R. EXCEDIDO']]
     excedente = excedente.groupby('NOMBRE', as_index=False)[
@@ -108,8 +162,6 @@ if 'usuario' in st.session_state:
         excedenteAnt = df_anterior
     else:
         excedenteAnt = df_adminANT
-
-    mes_anterior = mes_actual - 2 if mes_actual > 2 else 12
 
     excedenteAnt = excedenteAnt.groupby('NOMBRE', as_index=False)[
         'R. EXCEDIDO'].mean()
@@ -149,7 +201,7 @@ if 'usuario' in st.session_state:
         ' Minutos'
 
     # Filtro de home office
-    dfho = df2[(df2['MES FECHA'] == mes_actual)]
+    dfho = df2[(df2['MES FECHA'] == hoy.month)]
 
     print(f'AQUI ESTA EL DF HOME DESPUES DE FILTRAR{dfho}')
     # Filtro de vacaciones
@@ -167,7 +219,7 @@ if 'usuario' in st.session_state:
     ]
     dfho = dfho[['EJECUTIVO', 'ÁREA']]
     # Filtrar columnas dfvc
-    dfvc = dfvc[['EJECUTIVO', 'ÁREA', 'FECHA']]
+    dfvc = dfvc[['EJECUTIVO', 'AREA', 'FECHA']]
     dfvc = dfvc.sort_values(by='FECHA', ascending=True)
     TOPasis = df_actual.groupby('NOMBRE', as_index=False)[
         'RETARDOS'].sum().sort_values(by='RETARDOS', ascending=False)
@@ -203,7 +255,6 @@ if 'usuario' in st.session_state:
     # RETARDOS POR ÁREA // ADMINISTRADOR
 
     df_suma_retardos = df_actual[['ÁREA', 'RETARDOS']]
-    mes_anterior = mes_actual - 2 if mes_actual > 2 else 12
     dfneww = df[df['FECHA'].dt.month == (mes_anterior)]
     dfneww = dfneww[['ÁREA', 'RETARDOS']]
     df_suma1 = dfneww.groupby('ÁREA', as_index=False)[
@@ -286,13 +337,12 @@ if 'usuario' in st.session_state:
             else:
                 st.metric(label='Área', value='TV')
         with columnas[3]:
-            if hoy.day < 16:
-                mes_actual = (mes_actual - 2)
-            else:
-                mes_actual = (mes_actual - 1)
             meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
                      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-            st.metric(label='Mes calculado', value=meses[mes_actual])
+            if hoy.day < 17:
+                st.metric(label='Mes calculado', value=meses[mes_anterior])
+            else:
+                st.metric(label='Mes calculado', value=meses[mes_actual])
 
     # SE BUSCA COINCIDENCIAS EN DFHO Y DFVC
     dfho_filtrado = dfho[~dfho['EJECUTIVO'].isin(dfvc['EJECUTIVO'])]
@@ -302,29 +352,23 @@ if 'usuario' in st.session_state:
         if len(dfvc) > 0:
             st.subheader("Próximas vacaciones")
             st.dataframe(dfvc, use_container_width=True,
-                         key='data-vc', hide_index=True)
+                         key='data-vc', hide_index=True, height=270)
         else:
             st.metric(label='Próximas vacaciones', value="0")
     with col2:
-        if hoy.day in [14, 15, 16, 30, 31, 1]:
-            dfho_filtrado.dropna()
-        st.subheader('Home Office')
-        st.dataframe(dfho_filtrado, use_container_width=True,
-                     key='data-ho', hide_index=True)
-    # col3, col4 = st.columns([6, 4])
-    # with col3:
-    #     st.plotly_chart(
-    #         utils.aplicarformatoChart(
-    #             fig,
-    #             backgroundColor=backgroundColor,
-    #             textcolor=textColor
-    #         ),
-    #         key='chart-pie'
-    #     )
-    # with col4:
-    #     st.subheader('Detalle / Retardos - Colaborador')
-    #     st.dataframe(TOPasis, use_container_width=True,
-    #                  key='tabla-top', hide_index=True, height=430)
+        tab1, tab2 = st.tabs(("Home Office", "Horarios"))
+        with tab1:
+            if hoy.day in [14, 15, 16, 30, 31, 1]:
+                st.write("En quincenas no hay Home Office",
+                         key='st-key-chart-HOME')
+            st.subheader('Home Office')
+            st.dataframe(dfho_filtrado, use_container_width=True,
+                         key='data-ho', hide_index=True, height=220)
+        with tab2:
+            st.subheader('Horario')
+            st.dataframe(dfhr, hide_index=True,
+                         use_container_width=True, height=220)  # Ajusta la altura de la gráfica
+
     if st.session_state['usuario'] not in ['lfortunato', 'clopez']:
         col7, col8 = st.columns([6, 4])
         with col7:
