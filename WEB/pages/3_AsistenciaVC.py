@@ -21,7 +21,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
         return pd.read_csv(link, encoding='utf-8-sig')
 
     def acceso():
-        token = "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"
+        token = "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"
         g = Github(token)
         repo = g.get_repo("BM1012/AsistenciasTV")
         return repo
@@ -32,22 +32,17 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
                 # Leer el archivo actual
                 contenido = repo.get_contents("Vacaciones.csv")
                 contenido_decodificado = contenido.decoded_content.decode(
-                    'latin-1')
+                    'utf-8-sig')
 
                 # Usar StringIO para simular un archivo
                 df = pd.read_csv(
-                    StringIO(contenido_decodificado), encoding='latin-1')
-                df.rename(
-                    columns={"ï»¿COLABORADOR": "COLABORADOR"}, inplace=True)
-                df['AREA'] = df_filtered['AREA'].replace(
-                    "AdministraciÃ³n y servicios", 'Atención a clientes')
+                    StringIO(contenido_decodificado), encoding='utf-8-sig')
 
                 # Actualizar registros existentes
                 for index, nueva_fila in nuevos_datos.iterrows():
                     condicion = (df['COLABORADOR'] == nueva_fila['COLABORADOR']) & \
-                                (df['FECHA'] == nueva_fila['FECHA']) & \
-                                (df['AREA'] == nueva_fila['AREA'])
-                    if df[condicion].any().any():  # Si el registro existe
+                                (df['FECHA'] == nueva_fila['FECHA'])
+                    if not df.loc[condicion].empty:  # Si el registro existe
                         df.loc[condicion, 'ID'] = nueva_fila['ID']
                     else:
                         df = pd.concat(
@@ -57,7 +52,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
                 repo.update_file(
                     path='Vacaciones.csv',
                     message='Actualización automática del archivo',
-                    content=df.to_csv(index=False, encoding='latin-1'),
+                    content=df.to_csv(index=False, encoding='utf-8-sig'),
                     sha=contenido.sha
                 )
                 st.success("Datos guardados correctamente")
@@ -77,11 +72,16 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
     fecha_hora_actual = dt.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     # BASE DE DATOS -----------------------------------------------------------------
-
-    if st.session_state['usuario'] in ['omoctezuma', 'molguin', 'jreyes', 'amendoza']:
+    if st.session_state['usuario'] in ['amendoza']:
         filtro1 = filtro1[filtro1['AREA'] == st.session_state['area']]
     elif st.session_state['usuario'] in ['aherrera']:
         filtro1 = filtro1[filtro1['AREA'] == "Tesoreria"]
+    elif st.session_state['usuario'] in 'omoctezuma':
+        filtro1 = filtro1[filtro1['AREA'] == "Atencion a clientes"]
+    elif st.session_state['usuario'] in ['jreyes']:
+        filtro1 = filtro1[filtro1['AREA'] == "Nominas"]
+    elif st.session_state['usuario'] in ['molguin']:
+        filtro1 = filtro1[filtro1['AREA'] == "Administracion y servicios"]
     elif st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria']:
         pass  # No necesita modificación
     else:
@@ -98,10 +98,16 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
 
     # SOLICITUDES GERENTES -----------------------------------------------------------
 
-    if st.session_state['usuario'] in ['omoctezuma', 'molguin', 'jreyes', 'amendoza']:
+    if st.session_state['usuario'] in ['amendoza', 'clopez', 'lfortunato']:
         filtro2 = filtro2[filtro2['AREA'] == st.session_state['area']]
     elif st.session_state['usuario'] in ['aherrera']:
-        filtro2 = filtro2[filtro2['AREA'] == 'Tesoreria']
+        filtro2 = filtro2[filtro2['AREA'] == "Tesoreria"]
+    elif st.session_state['usuario'] in 'omoctezuma':
+        filtro2 = filtro2[filtro2['AREA'] == "Atencion a clientes"]
+    elif st.session_state['usuario'] in ['jreyes']:
+        filtro2 = filtro2[filtro2['AREA'] == "Nominas"]
+    elif st.session_state['usuario'] in ['molguin']:
+        filtro2 = filtro2[filtro2['AREA'] == "Administracion y servicios"]
 
     filtro2 = filtro2[filtro2['ID'] == 0]
 
@@ -120,7 +126,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
     filtro3 = filtro3[['COLABORADOR', 'AREA',
                        'FECHA']]
     filtro3['AUTORIZACION'] = 'Pendiente'
-   
+
     # INTERFAZ -----------------------------------------------------------------------
 
     st.title("TRUST :grey[VALUE]")
