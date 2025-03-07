@@ -5,6 +5,7 @@ import time
 import pandas as pd
 from io import StringIO
 from github import Github
+import github.GithubException import BadCredentialsException
 import login as login
 
 login.generarLogin()
