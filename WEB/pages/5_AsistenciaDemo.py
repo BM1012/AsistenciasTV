@@ -6,7 +6,7 @@ import time
 import login as login
 from io import StringIO
 from github import Github
-import github.GithubException import BadCredentialsException
+from github.GithubException import BadCredentialsException
 
 hoy = dt.datetime.now().strftime("%d/%m/%Y")
 fecha_hora_actual = dt.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
