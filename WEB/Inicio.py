@@ -3,7 +3,7 @@ import utils
 import login as login  # Importar el módulo completo
 import pandas as pd
 import plotly.graph_objects as go
-import plotly as px
+import plotly.express as px
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 
