@@ -390,7 +390,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
             with tab5:
                 st.subheader('Excedente retardos')
                 st.dataframe(excedente, hide_index=True,
-                             use_container_width=True, height=300)
+                             use_container_width=True, height=350)
             with tab6:
                 if len(quincenas) > 0:
                     st.subheader("Sin Asistencia / Pre / Post Quincena")
