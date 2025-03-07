@@ -44,8 +44,10 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
 
     GitVacs = carga_datos(ghdf)
 
-    if st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria', 'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
-        GitVacs = GitVacs[GitVacs['AREA'] == st.session_state['area']]
+    if st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria']:
+        pass
+    elif st.session_state['usuario'] in ['omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
+        GitVacs = GitVacs[GitVacs['AREA'] == st.session_state['area']]        
     else:
         GitVacs = GitVacs[GitVacs['COLABORADOR'] == st.session_state['Nombre']]
 
@@ -111,12 +113,16 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
         dfho = df2[(df2['MES FECHA'] == mes_actual)]
         dfho = dfho[(dfho['DÍA 1'] == dia_semana) |
                     (dfho['DÍA 2'] == dia_semana)]
+    if st.session_state['usuario']in ['lfortunato', 'clopez', 'bsanabria']:    
+        dfho = df2
     else:
         dfho = df2[(df2['ÁREA'] == st.session_state['area'])]
 
     if st.session_state['usuario'] not in ['lfortunato', 'clopez', 'bsanabria', 'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
         dfvc = df3  # [(df3['EJECUTIVO'] == st.session_state['Nombre'])]
         dfvc = dfvc[dfvc['FECHA'] > (hoy - timedelta(days=1))]
+    elif st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria']:
+        dfvc = df3    
     else:
         dfvc = df3[(df3['AREA'] == st.session_state['area'])]
 
@@ -127,8 +133,8 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
 
     dfho = dfho[['EJECUTIVO', 'MES', 'DÍA 1', 'DÍA 2']]
 
-    if st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria', 'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
-        dfhr = df4[(df4['ÁREA'] == st.session_state['area'])]
+    if st.session_state['usuario'] in ['omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
+        dfhr = df4[(df4['ÁREA'] == st.session_state['area'])] 
     else:
         dfhr = df4
 
