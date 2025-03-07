@@ -3,7 +3,7 @@ import utils
 import pandas as pd
 import datetime
 from datetime import timedelta
-import plotly_express as px
+import plotly as px
 import matplotlib.pyplot as plt
 import login as login
 
