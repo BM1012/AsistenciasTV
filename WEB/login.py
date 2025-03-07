@@ -87,7 +87,7 @@ def generarMenu(usuario):
 
     with st.sidebar:
         st.image(
-            "C:/Users/Bruno Sanabria/Pictures/Screenshots/Captura de pantalla 2025-02-14 171552.png", use_container_width=True)
+            "/mount/src/asistenciastv/WEB/Captura de pantalla 2025-02-14 171552.png", use_container_width=True)
         usuario_df = dfusuarios[(dfusuarios['User'] == usuario)]
         nombre = usuario_df['Ejecutivo'].iloc[0]
         st.write(f'Usuario: **:blue-background[{nombre}]** ')
