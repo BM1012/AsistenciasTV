@@ -390,7 +390,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
             with tab5:
                 st.subheader('Excedente retardos')
                 st.dataframe(excedente, hide_index=True,
-                             use_container_width=True, height=350)
+                             use_container_width=True, height=300)
             with tab6:
                 if len(quincenas) > 0:
                     st.subheader("Sin Asistencia / Pre / Post Quincena")
@@ -417,7 +417,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
                 with col8:
                     st.subheader("Detalle / Picos Retardos")
                     st.dataframe(
-                        day_max[['FECHA', 'NOMBRE', 'MINUTOS OUT']], use_container_width=True, hide_index=True, height=360)
+                        day_max[['FECHA', 'NOMBRE', 'MINUTOS OUT']], use_container_width=True, hide_index=True, height=450)
 
             else:
                 with col7:
