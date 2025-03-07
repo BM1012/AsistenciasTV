@@ -417,7 +417,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
                 with col8:
                     st.subheader("Detalle / Picos Retardos")
                     st.dataframe(
-                        day_max[['FECHA', 'NOMBRE', 'MINUTOS OUT']], use_container_width=True, hide_index=True, height=350)
+                        day_max[['FECHA', 'NOMBRE', 'MINUTOS OUT']], use_container_width=True, hide_index=True, height=320)
 
             else:
                 with col7:
