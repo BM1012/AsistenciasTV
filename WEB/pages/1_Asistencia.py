@@ -308,7 +308,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
                       y='R. EXCEDIDO',
                       title='Picos Retardos',
                       width=800,  # Ajusta el ancho de la gráfica
-                      height=150)  # Ajusta la altura de la gráfica
+                      height=350)  # Ajusta la altura de la gráfica
     fig2.update_traces(textposition='top center',
                        textfont=dict(size=16))
     # Agregar sombreado
@@ -390,7 +390,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
             with tab5:
                 st.subheader('Excedente retardos')
                 st.dataframe(excedente, hide_index=True,
-                             use_container_width=True, height=450)
+                             use_container_width=True, height=300)
             with tab6:
                 if len(quincenas) > 0:
                     st.subheader("Sin Asistencia / Pre / Post Quincena")
