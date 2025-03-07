@@ -25,10 +25,17 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
         return pd.read_csv(link, encoding='utf-8-sig')
 
     def acceso():
-        token = "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"
-        g = Github(token)
-        repo = g.get_repo("BM1012/AsistenciasTV")
-        return repo
+        try:
+            token = st.secrets["github"]["token"]
+            # Autentícate con GitHub
+            g = Github(token)
+            repo = g.get_repo("BM1012/AsistenciasTV")
+            st.success("Conexión exitosa con el repositorio.")
+            return repo
+        except BadCredentialsException:
+            st.error("Error de autenticación: Token inválido o vencido.")
+        except Exception as e:
+            st.error(f"Error inesperado: {e}")
 
     # Función para actualizar el archivo CSV en GitHub
 
