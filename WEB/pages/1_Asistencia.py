@@ -17,7 +17,7 @@ backgroundColor = st.get_option('theme.secondaryBackgroundColor')
 textColor = st.get_option('theme.textColor')
 
 # Aplicando colores CSS
-utils.local_css('estilos.css', backgroundColor)
+utils.local_css('/mount/src/asistenciastv/WEB/estilos.css', backgroundColor)
 
 login.generarLogin()
 
