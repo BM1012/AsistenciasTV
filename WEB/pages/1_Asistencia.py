@@ -102,6 +102,8 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
 
     if st.session_state['usuario'] not in ['lfortunato', 'clopez', 'bsanabria', 'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
         df_filtered = df[df['NOMBRE'] == st.session_state['Nombre']]
+    elif st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria']:
+        pass
     else:
         df_filtered = df[df['ÁREA'] == st.session_state['area']]
 
