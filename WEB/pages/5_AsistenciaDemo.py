@@ -2,7 +2,9 @@ import streamlit as st
 import unicodedata
 import pandas as pd
 import datetime as dt
+import time
 import login as login
+from io import StringIO
 from github import Github
 
 hoy = dt.datetime.now().strftime("%d/%m/%Y")
@@ -19,46 +21,130 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
 
     url = 'https://raw.githubusercontent.com/BM1012/AsistenciasTV/main/PERMISOS.csv'
 
-    df_filtered = pd.read_csv(url, encoding='latin-1')
+    def carga_datos(link):
+        return pd.read_csv(link, encoding='utf-8-sig')
+
+    def acceso():
+        token = "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"
+        g = Github(token)
+        repo = g.get_repo("BM1012/AsistenciasTV")
+        return repo
+
+    # Función para actualizar el archivo CSV en GitHub
+
+    def actualizar_csv(repo, nuevos_datos):
+        while True:
+            try:
+                # Leer el archivo actual
+                contenido = repo.get_contents("PERMISOS.csv")
+                contenido_decodificado = contenido.decoded_content.decode(
+                    'utf-8-sig')
+
+                # Usar StringIO para simular un archivo
+                df = pd.read_csv(
+                    StringIO(contenido_decodificado), encoding='utf-8-sig')
+
+                # Actualizar registros existentens
+                for index, nueva_fila in nuevos_datos.iterrows():
+                    condicion = (df['COLABORADOR'] == nueva_fila['COLABORADOR']) & \
+                        (df['FECHA'] == nueva_fila['FECHA']) & \
+                        (df['CONCEPTO'] == nueva_fila['CONCEPTO'])
+
+                    if df[condicion].any().any():  # Si el registro existe
+                        df.loc[condicion, 'ID'] = nueva_fila['ID']
+                        # Debug
+                        print(
+                            f"Actualizando ID para: {nueva_fila['COLABORADOR']} - {nueva_fila['FECHA']}")
+                    else:
+                        df = pd.concat(
+                            [df, nueva_fila.to_frame().T], ignore_index=True)
+
+                # Subir la nueva versión
+                repo.update_file(
+                    path='PERMISOS.csv',
+                    message='Actualización automática del archivo',
+                    content=df.to_csv(
+                        index=False, encoding='utf-8-sig'),
+                    sha=contenido.sha
+                )
+                st.success("Datos guardados correctamente")
+                break
+            except Exception as e:
+                # Si hay un conflicto, reintentar después de 5 segundos
+                st.warning(f"Error: {e}. Reintentando en 5 segundos...")
+                time.sleep(5)
+
+    df_filtered = carga_datos(url)
     filtro1 = pd.DataFrame(df_filtered)
     filtro2 = pd.DataFrame(df_filtered)
     filtro3 = pd.DataFrame(df_filtered)
+    filtro2['AREA'] = filtro2['AREA'].replace(
+        "AtenciÃ³n a clientes", 'Atencion a clientes')
 
-    if st.session_state['usuario'] in ['omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']:
+    # BASE DE DATOS -----------------------------------------------------------------
+
+    if st.session_state['usuario'] in ['amendoza']:
         filtro1 = filtro1[filtro1['AREA'] == st.session_state['area']]
+    elif st.session_state['usuario'] in ['aherrera']:
+        filtro1 = filtro1[filtro1['AREA'] == "Tesoreria"]
+    elif st.session_state['usuario'] in 'omoctezuma':
+        filtro1 = filtro1[filtro1['AREA'] == "Atencion a clientes"]
+    elif st.session_state['usuario'] in ['jreyes']:
+        filtro1 = filtro1[filtro1['AREA'] == "Nominas"]
+    elif st.session_state['usuario'] in ['molguin']:
+        filtro1 = filtro1[filtro1['AREA'] == "Administracion y servicios"]
     elif st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria']:
-        filtro1 = filtro1
+        # Aquí podrías agregar lógica para estos usuarios si es necesario
+        pass  # No necesita modificación
     else:
-        filtro1 = filtro1[(filtro1['AREA'] == st.session_state['area']) & (
-            filtro1['COLABORADOR'] == st.session_state['colab'])]
+        filtro1 = filtro1[filtro1['COLABORADOR'] == st.session_state['colab']]
 
     filtro1['ID'] = filtro1['ID'].replace(
         0, 'EN ESPERA DE CONFIRMACIÓN DE GERENTE')
     filtro1['ID'] = filtro1['ID'].replace(
-        1, 'EN ESPERA DE CONFIRMACIÓN DE DIRECCIÓN')
-    filtro1['ID'] = filtro1['ID'].replace(2, 'APROBADO')
+        1, 'APROBADO')
+    filtro1['ID'] = filtro1['ID'].replace(
+        2, 'EN ESPERA DE CONFIRMACIÓN DE DIRECCIÓN')
     filtro1['ID'] = filtro1['ID'].replace(3, 'NO AUTORIZADO')
     filtro1 = filtro1[['COLABORADOR',
                        'FECHA', 'CONCEPTO', 'DETALLE', 'ID']]
-    if st.session_state['usuario'] not in ['lfortunato', 'clopez', 'bsanabria']:
+    filtro1 = filtro1.drop_duplicates()  # Elimina filas duplicadas
+
+    # SOLICITUDES GERENTES -----------------------------------------------------------
+    if st.session_state['usuario'] in ['amendoza', 'clopez', 'lfortunato']:
         filtro2 = filtro2[filtro2['AREA'] == st.session_state['area']]
-    filtro2 = filtro2[filtro2[
-        'ID'] == 0]
-    filtro2['ID'] = filtro2['ID'].replace(
-        0, False)
-    filtro2 = filtro2[['COLABORADOR',
-                       'FECHA', 'CONCEPTO', 'DETALLE']]
-    print(f'2.- este es el filtro 2: {filtro2}')
+    elif st.session_state['usuario'] in ['aherrera']:
+        filtro2 = filtro2[filtro2['AREA'] == "Tesoreria"]
+    elif st.session_state['usuario'] in 'omoctezuma':
+        filtro2 = filtro2[filtro2['AREA'] == "Atencion a clientes"]
+    elif st.session_state['usuario'] in ['jreyes']:
+        filtro2 = filtro2[filtro2['AREA'] == "Nominas"]
+    elif st.session_state['usuario'] in ['molguin']:
+        filtro2 = filtro2[filtro2['AREA'] == "Administracion y servicios"]
+
+    filtro2 = filtro2[filtro2['ID'] == 0]
+
+    if st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria']:
+        filtro2 = filtro2[['COLABORADOR', 'AREA',
+                           'FECHA', 'CONCEPTO', 'DETALLE']]
+    else:
+        filtro2 = filtro2[['COLABORADOR',
+                           'FECHA', 'CONCEPTO', 'DETALLE']]
     filtro2['AUTORIZACION'] = 'Pendiente'
 
+    # SOLICITUDES DIRECCIÓN -----------------------------------------------------------
+
     filtro3 = filtro3[filtro3[
-        'ID'] == 1]
-    filtro3 = filtro3[['COLABORADOR',
+        'ID'] == 2]
+    filtro3 = filtro3[['COLABORADOR', 'AREA',
                        'FECHA', 'CONCEPTO', 'DETALLE']]
     filtro3['AUTORIZACION'] = 'Pendiente'
 
-    st.title("TRUST :orange[VALUE]")
-    # Dataframe
+    # INTERFAZ -----------------------------------------------------------------------
+
+    st.title("TRUST :grey[VALUE]")
+
+    print(st.session_state['usuario'])
     if st.session_state['usuario'] in ['lfortunato', 'clopez', 'bsanabria']:
         tab1, tab2, tab3, tab4 = st.tabs(
             ["Incidencias", "Estatus", 'Solicitudes Gerentes', 'Solicitudes a Dirección'])
@@ -69,7 +155,10 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
         tab1, tab2 = st.tabs(
             ["Incidencias", "Estatus"])
 
+    # SOLICITUD USUARIOS -------------------------------------------------------------
+
     with tab1:
+
         st.subheader("Envío de incidencias")
 
         today = dt.datetime.now()
@@ -95,7 +184,8 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
             # Guardar el nombre directamente
             "COLABORADOR": st.session_state['colab'],
             # Guardar la opción directamente
-            "AREA": st.session_state['area'],
+            # Aplicar normalización
+            "AREA": unicodedata.normalize('NFKD', st.session_state['area']).encode('ASCII', 'ignore').decode('ASCII'),
             # Guardar las fechas seleccionadas
             "FECHA": d.strftime(format="%d/%m/%Y"),
             "CONCEPTO": e,     # Guardar el concepto
@@ -110,47 +200,32 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
             st.warning(
                 body='Los datos guardados, se enviaron correctamente para su confirmación')
 
-        df = pd.DataFrame([datos_dict])
-        df_completo = pd.concat([df_filtered, df], ignore_index=True)
-        print(datos_dict)
+        # df_filtered = carga_datos(url)
+        # df = pd.DataFrame([datos_dict])
+        # df_completo = pd.concat([df_filtered, df], ignore_index=True)
 
         if st.button("Guardar", key='Guardar-solicitud'):
-            df_completo.to_csv("PERMISOS.csv", index=False, encoding='latin-1')
+            repo = acceso()
+            actualizar_csv(repo, permi)
 
-            try:
-                token = "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"
-                g = Github(token)
-                repo = g.get_repo("BM1012/AsistenciasTV")
+            # try:
+            #     repo = acceso()
+            #     with open('PERMISOS.csv', 'r', encoding='latin-1') as file:
+            #         content = file.read()
+            #         estatus = content
 
-                with open('PERMISOS.csv', 'r', encoding='latin-1') as file:
-                    content = file.read()
-                    estatus = content
+            #     repo.update_file(
+            #         path='PERMISOS.csv',
+            #         message='Actualización automatica del archivo',
+            #         content=content,
+            #         # Obtener el SHA del archivo actual
+            #         sha=repo.get_contents("PERMISOS.csv").sha
 
-                repo.update_file(
-                    path='PERMISOS.csv',
-                    message='Actualización automatica del archivo',
-                    content=content,
-                    # Obtener el SHA del archivo actual
-                    sha=repo.get_contents("PERMISOS.csv").sha
+            #     )
+            #     st.success("Datos guardados correctamente")
 
-                )
-                st.success("Datos guardados correctamente")
-                df_filtered = pd.read_csv(url, encoding='latin-1')
-                filtro1 = pd.DataFrame(df_filtered)
-                df_filtered = df_filtered[df_filtered[
-                    'COLABORADOR'] == st.session_state['colab']]
-                filtro1 = df_filtered[df_filtered[
-                    'COLABORADOR'] == st.session_state['colab']]
-                filtro1['ID'] = filtro1['ID'].replace(
-                    0, 'EN ESPERA DE CONFIRMACIÓN DE GERENTE')
-                filtro1['ID'] = filtro1['ID'].replace(
-                    1, 'EN ESPERA DE CONFIRMACIÓN DE DIRECCIÓN')
-                filtro1['ID'] = filtro1['ID'].replace(2, 'APROBADO')
-                filtro1 = filtro1[['COLABORADOR',
-                                   'FECHA', 'CONCEPTO', 'DETALLE', 'ID']]
-
-            except Exception as e:
-                st.error(f"Error al subir el archivo: {e}")
+            # except Exception as e:
+            #     st.error(f"Error al subir el archivo: {e}")
 
     with tab2:
         st.subheader("Base de datos")
@@ -159,54 +234,53 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
         with tab3:
             st.subheader("Solicitudes pendientes")
             edited_df = st.data_editor(filtro2, column_config={
-                "AUTORIZACION": st.column_config.SelectboxColumn("AUTORIZACION", options=opcion, help="Selecciona si autoriza la incidencia", default='Pendiente')}, disabled=["widgets"], hide_index=True)
+                "AUTORIZACION": st.column_config.SelectboxColumn("AUTORIZACION", options=opcion, help="Selecciona si autoriza la incidencia", default='Pendiente')}, disabled=["widgets"], hide_index=True, use_container_width=True)
             # Botón para guardar los cambios
             if st.button('Guardar', key='Guardar-ConfirmarG'):
                 # Verificar si algún checkbox está seleccionado
                 # Verifica si algún valor en la columna 'ID' es True
                 if not (edited_df['AUTORIZACION'] == 'Pendiente').all():
 
-                    try:
-                        # Leer el archivo CSV desde GitHub
-                        df_filtered = pd.read_csv(url, encoding='latin-1')
+                    # try:
+                    # Leer el archivo CSV desde GitHub
+                    # Obtener los índices de las filas seleccionadas (donde el checkbox está activado)
+                    filas_seleccionadas = edited_df[edited_df['AUTORIZACION']
+                                                    == 'Aprobar'].index
+                    filas_seleccionadas_2 = edited_df[edited_df['AUTORIZACION']
+                                                      == 'No aprobar'].index
+                    filas_seleccionadas_3 = edited_df[edited_df['AUTORIZACION']
+                                                      == 'Pendiente'].index
 
-                        # Obtener los índices de las filas seleccionadas (donde el checkbox está activado)
-                        filas_seleccionadas = edited_df[edited_df['AUTORIZACION']
-                                                        == 'Aprobar'].index
-                        filas_seleccionadas_2 = edited_df[edited_df['AUTORIZACION']
-                                                          == 'No aprobar'].index
-                        filas_seleccionadas_3 = edited_df[edited_df['AUTORIZACION']
-                                                          == 'Pendiente'].index
+                    # Actualizar los valores de 'ID' en df_filtered para las filas seleccionadas
 
-                        # Actualizar los valores de 'ID' en df_filtered para las filas seleccionadas
-
-                        df_filtered.loc[filas_seleccionadas, 'ID'] = 1
+                    # Verificar que las filas seleccionadas no estén vacías
+                    if not filas_seleccionadas.empty:
+                        df_filtered.loc[filas_seleccionadas, 'ID'] = 2
+                    if not filas_seleccionadas_2.empty:
                         df_filtered.loc[filas_seleccionadas_2, 'ID'] = 3
+                    if not filas_seleccionadas_3.empty:
                         df_filtered.loc[filas_seleccionadas_3, 'ID'] = 0
 
-                        # Guardar el archivo localmente
+                    # Guardar el archivo localmente
 
-                        df_filtered.to_csv(
-                            "PERMISOS.csv", index=False, encoding='latin-1')
+                    df_filtered.to_csv(
+                        "PERMISOS.csv", index=False, encoding='utf-8-sig')
 
-                        # Subir el archivo a GitHub
+                    # Subir el archivo a GitHub
+                    repo = acceso()
+                    actualizar_csv(repo, df_filtered)
+                    # with open('PERMISOS.csv', 'r', encoding='latin-1') as file:
+                    #     content = file.read()
 
-                        token = "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"
-                        g = Github(token)
-                        repo = g.get_repo("BM1012/AsistenciasTV")
-
-                        with open('PERMISOS.csv', 'r', encoding='latin-1') as file:
-                            content = file.read()
-
-                        repo.update_file(
-                            path='PERMISOS.csv',
-                            message='Actualización automática del archivo',
-                            content=content,
-                            # Obtener el SHA del archivo actual
-                            sha=repo.get_contents("PERMISOS.csv").sha)
-                        st.success("Datos guardados correctamente")
-                    except Exception as e:
-                        st.error(f"Error al subir el archivo: {e}")
+                    # repo.update_file(
+                    #     path='PERMISOS.csv',
+                    #     message='Actualización automática del archivo',
+                    #     content=content,
+                    #     # Obtener el SHA del archivo actual
+                    #     sha=repo.get_contents("PERMISOS.csv").sha)
+                    # st.success("Datos guardados correctamente")
+                    # except Exception as e:
+                    #     st.error(f"Error al subir el archivo: {e}")
                 else:
                     st.warning(
                         "No se seleccionó ninguna incidencia para autorizar.")
@@ -215,55 +289,57 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
 
     try:
         with tab4:
+            # df_filtered = carga_datos(url)
             st.subheader("Solicitudes pendientes")
             edited_df = st.data_editor(filtro3,  column_config={
-                "AUTORIZACION": st.column_config.SelectboxColumn("AUTORIZACION", options=opcion, help="Selecciona si autoriza la incidencia", default='Pendiente')}, disabled=["widgets"], hide_index=True, key='BaseDire')
+                "AUTORIZACION": st.column_config.SelectboxColumn("AUTORIZACION", options=opcion, help="Selecciona si autoriza la incidencia", default='Pendiente')}, disabled=["widgets"], hide_index=True, key='BaseDire', use_container_width=True)
             # Botón para guardar los cambios
             if st.button('Guardar', key='Guardar-ConfirmarDR'):
                 # Verificar si algún checkbox está seleccionado
                 if not (edited_df['AUTORIZACION'] == 'Pendiente').all():
 
-                    try:
-                        # Leer el archivo CSV desde GitHub
-                        df_filtered = pd.read_csv(url, encoding='latin-1')
+                    # try:
+                    # Leer el archivo CSV desde GitHub
+                    # carga_datos(url)
 
-                        # Obtener los índices de las filas seleccionadas (donde el checkbox está activado)
-                        filas_seleccionadas = edited_df[edited_df['AUTORIZACION']
-                                                        == 'Aprobar'].index
-                        filas_seleccionadas_2 = edited_df[edited_df['AUTORIZACION']
-                                                          == 'No aprobar'].index
-                        filas_seleccionadas_3 = edited_df[edited_df['AUTORIZACION']
-                                                          == 'Pendiente'].index
+                    # Obtener los índices de las filas seleccionadas (donde el checkbox está activado)
+                    filas_seleccionadas = edited_df[edited_df['AUTORIZACION']
+                                                    == 'Aprobar'].index
+                    filas_seleccionadas_2 = edited_df[edited_df['AUTORIZACION']
+                                                      == 'No aprobar'].index
+                    filas_seleccionadas_3 = edited_df[edited_df['AUTORIZACION']
+                                                      == 'Pendiente'].index
 
-                        # Actualizar los valores de 'ID' en df_filtered para las filas seleccionadas
+                    # Actualizar los valores de 'ID' en df_filtered para las filas seleccionadas
 
+                    if not filas_seleccionadas.empty:
                         df_filtered.loc[filas_seleccionadas, 'ID'] = 1
+                    if not filas_seleccionadas_2.empty:
                         df_filtered.loc[filas_seleccionadas_2, 'ID'] = 3
-                        df_filtered.loc[filas_seleccionadas_3, 'ID'] = 0
+                    if not filas_seleccionadas_3.empty:
+                        df_filtered.loc[filas_seleccionadas_3, 'ID'] = 2
 
-                        # Guardar el archivo localmente
+                    # Guardar el archivo localmente
 
-                        df_filtered.to_csv(
-                            "PERMISOS.csv", index=False, encoding='latin-1')
+                    df_filtered.to_csv(
+                        "PERMISOS.csv", index=False, encoding='utf-8-sig')
 
-                        # Subir el archivo a GitHub
+                    # Subir el archivo a GitHub
 
-                        token = "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"
-                        g = Github(token)
-                        repo = g.get_repo("BM1012/AsistenciasTV")
+                    repo = acceso()
+                    actualizar_csv(repo, df_filtered)
+                    # with open('PERMISOS.csv', 'r', encoding='latin-1') as file:
+                    #     content = file.read()
 
-                        with open('PERMISOS.csv', 'r', encoding='latin-1') as file:
-                            content = file.read()
-
-                        repo.update_file(
-                            path='PERMISOS.csv',
-                            message='Actualización automática del archivo',
-                            content=content,
-                            # Obtener el SHA del archivo actual
-                            sha=repo.get_contents("PERMISOS.csv").sha)
-                        st.success("Datos guardados correctamente")
-                    except Exception as e:
-                        st.error(f"Error al subir el archivo: {e}")
+                    # repo.update_file(
+                    #     path='PERMISOS.csv',
+                    #     message='Actualización automática del archivo',
+                    #     content=content,
+                    #     # Obtener el SHA del archivo actual
+                    #     sha=repo.get_contents("PERMISOS.csv").sha)
+                    # st.success("Datos guardados correctamente")
+                    # except Exception as e:
+                    #     st.error(f"Error al subir el archivo: {e}")
                 else:
                     st.warning(
                         "No se seleccionó ninguna incidencia para autorizar.")
