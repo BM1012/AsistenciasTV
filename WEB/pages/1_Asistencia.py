@@ -200,7 +200,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
 
     # Leer el archivo CSV PASS-ST
     # Asegúrate de proporcionar la ruta correcta
-    df_pass_st = pd.read_csv('PASS-ST.csv')
+    df_pass_st = pd.read_csv('/mount/src/asistenciastv/WEB/PASS-ST.csv')
 
     # Filtrar por el área en st.session_state
 
