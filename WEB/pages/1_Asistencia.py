@@ -308,7 +308,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
                       y='R. EXCEDIDO',
                       title='Picos Retardos',
                       width=800,  # Ajusta el ancho de la gráfica
-                      height=450)  # Ajusta la altura de la gráfica
+                      height=350)  # Ajusta la altura de la gráfica
     fig2.update_traces(textposition='top center',
                        textfont=dict(size=16))
     # Agregar sombreado
