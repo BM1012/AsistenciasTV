@@ -417,7 +417,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
                 with col8:
                     st.subheader("Detalle / Picos Retardos")
                     st.dataframe(
-                        day_max[['FECHA', 'NOMBRE', 'MINUTOS OUT']], use_container_width=True, hide_index=True, height=300)
+                        day_max[['FECHA', 'NOMBRE', 'MINUTOS OUT']], use_container_width=True, hide_index=True, height=290)
 
             else:
                 with col7:
@@ -427,7 +427,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
                     detailAsis['FECHA'] = detailAsis['FECHA'].dt.date
                     st.subheader("Detalle / Picos Retardos")
                     st.dataframe(
-                        detailAsis[['FECHA', 'NOMBRE', 'REGISTRO']], use_container_width=True, hide_index=True, height=300)
+                        detailAsis[['FECHA', 'NOMBRE', 'REGISTRO']], use_container_width=True, hide_index=True, height=290)
         else:
             with col7:
                 st.plotly_chart(utils.aplicarformatoChart(fig3, backgroundColor=backgroundColor,
