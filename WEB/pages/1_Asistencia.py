@@ -308,7 +308,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
                       y='R. EXCEDIDO',
                       title='Picos Retardos',
                       width=800,  # Ajusta el ancho de la gráfica
-                      height=350)  # Ajusta la altura de la gráfica
+                      height=400)  # Ajusta la altura de la gráfica
     fig2.update_traces(textposition='top center',
                        textfont=dict(size=16))
     # Agregar sombreado
@@ -427,7 +427,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
                     detailAsis['FECHA'] = detailAsis['FECHA'].dt.date
                     st.subheader("Detalle / Picos Retardos")
                     st.dataframe(
-                        detailAsis[['FECHA', 'NOMBRE', 'REGISTRO']], use_container_width=True, hide_index=True, height=360)
+                        detailAsis[['FECHA', 'NOMBRE', 'REGISTRO']], use_container_width=True, hide_index=True, height=300)
         else:
             with col7:
                 st.plotly_chart(utils.aplicarformatoChart(fig3, backgroundColor=backgroundColor,
