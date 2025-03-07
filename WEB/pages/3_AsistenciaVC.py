@@ -21,7 +21,7 @@ if 'usuario' in st.session_state and 'area' in st.session_state:
         return pd.read_csv(link, encoding='utf-8-sig')
 
     def acceso():
-        token = "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"
+        token = "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"
         g = Github(token)
         repo = g.get_repo("BM1012/AsistenciasTV")
         return repo
