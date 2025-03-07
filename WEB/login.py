@@ -3,7 +3,7 @@ import pandas as pd
 import unicodedata
 import datetime
 
-dfusuarios = pd.read_csv('./PASS-ST.csv')
+dfusuarios = pd.read_csv('/mount/src/asistenciastv/WEB/PASS-ST.csv')
 
 usuarios_permitidos = ['lfortunato', 'clopez', 'bsanabria',
                        'omoctezuma', 'molguin', 'jreyes', 'amendoza', 'aherrera']
